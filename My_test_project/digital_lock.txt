@@ -1,0 +1,67 @@
+#include <reg51.h>
+#include <stdio.h>
+
+/*
+Digital Lock System Using DIP Switch and LEDs
+	- Circuit: Use the DIP switch as a binary input for a password. 
+	The microcontroller checks the switch settings (password) and 
+	lights up an LED if correct.
+	- Application: A simple digital lock where a specific combination
+	on the DIP switch turns on a “lock opened” LED.
+	- Use Case: Good for understanding digital input and logical 
+	comparisons. Could be used in real-world applications for asmall
+	safe or container.
+	
+Instruction:
+- Set 8 bits dipswitch with pull down resistors to port 1 as follow:
+	Slot [1234 5678] is pinned correspondingly into port 1 line [0123 4567]
+- Set 8 LEDs to port 2 to output the signal
+
+Process:
+- User tries to unlock with different combination of bit_switches
+- If the port matches the password, then all LEDs light on as correct
+- The lock locks itself after certain amount of time and reset the password
+itself for the next unlock
+
+Result is a simple digital lock with an 8_bit dipswitch
+*/
+
+void Delay500ms(){
+    // Generate a 0.5 second delay for a 10 MHz clock using Timer 0 in 16-bit mode
+    unsigned int i;
+    for (i = 0; i < 40; i++){   // Loop to generate approximately 0.5 seconds
+        // Timer 0 delay calculation for 12-clock cycle 8051 with a 10 MHz clock:
+        // 1 machine cycle = 12 / 10 MHz = 1.2 us
+        // Max timer count = 65536, thus the timer max duration = 65536 * 1.2 us = 78.432 ms
+        // Divide 0.5 seconds by 78.432 ms to get around 6.375 cycles, rounding up to 7
+        TMOD = 0x01;   // Timer0 mode 1 (16-bit timer)
+        TH0 = 0x3C;    // Load high byte for 50 ms delay
+        TL0 = 0xB0;    // Load low byte for 50 ms delay
+        TR0 = 1;       // Start Timer0
+        while (TF0 == 0);  // Wait for Timer0 overflow flag
+        TR0 = 0;       // Stop Timer0
+        TF0 = 0;       // Clear overflow flag
+    }
+}
+
+void main (void){
+	unsigned int counter = 1;
+	unsigned char password = 0x63;
+	const unsigned int threshold = 5;
+	
+	while (1){
+		P2 = 0x00;
+		
+		if (P1 == password){
+			P2 = 0xFF;
+			Delay500ms();
+			counter++;
+		}
+		
+		if (counter > threshold){
+			P1 = P1 ^ 0x34 | (~P1 ^ 0x56);
+			password = (password << 1) | (password >> 7);
+			counter = 0;
+		}
+	}
+}

@@ -1,0 +1,78 @@
+C51 COMPILER V9.60.7.0   TEST_BLINK                                                        11/10/2024 11:06:35 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE TEST_BLINK
+OBJECT MODULE PLACED IN .\Objects\test_blink.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE test_blink.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listing
+                    -s\test_blink.lst) OBJECT(.\Objects\test_blink.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <stdio.h>
+   3          
+   4          // Define the specific bits of port1 and port2
+   5          sbit port2_0 = P2^0;  // Port 2, Pin 0
+   6          sbit port1_1 = P1^1;  // Port 1, Pin 1
+   7          
+   8          void Delay500ms(){
+   9   1          // Generate a 0.5 second delay for a 10 MHz clock using Timer 0 in 16-bit mode
+  10   1          unsigned int i;
+  11   1          for (i = 0; i < 40; i++){   // Loop to generate approximately 0.5 seconds
+  12   2              // Timer 0 delay calculation for 12-clock cycle 8051 with a 10 MHz clock:
+  13   2              // 1 machine cycle = 12 / 10 MHz = 1.2 us
+  14   2              // Max timer count = 65536, thus the timer max duration = 65536 * 1.2 us = 78.432 ms
+  15   2              // Divide 0.5 seconds by 78.432 ms to get around 6.375 cycles, rounding up to 7
+  16   2              TMOD = 0x01;   // Timer0 mode 1 (16-bit timer)
+  17   2              TH0 = 0x3C;    // Load high byte for 50 ms delay
+  18   2              TL0 = 0xB0;    // Load low byte for 50 ms delay
+  19   2              TR0 = 1;       // Start Timer0
+  20   2              while (TF0 == 0);  // Wait for Timer0 overflow flag
+  21   2              TR0 = 0;       // Stop Timer0
+  22   2              TF0 = 0;       // Clear overflow flag
+  23   2          }
+  24   1      }
+  25          
+  26          void Part1(){
+  27   1          // If port2_0 receives an ON signal, activate the LED on port1_1
+  28   1          if (port2_0 == 1){    // Check if P2.0 is high (ON signal)
+  29   2              port1_1 = 1;      // Turn on LED on P1.1
+  30   2          } else {
+  31   2              port1_1 = 0;      // Turn off LED
+  32   2          }
+  33   1      }
+  34          
+  35          void Part3(){
+  36   1          unsigned char pattern = 0xFE;  // Initial pattern: 1111 1110B
+  37   1      
+  38   1          while (1) {  // Infinite loop
+  39   2              P1 = pattern;       // Output the current pattern to Port 1
+  40   2              Delay500ms();       // Wait for 0.5 seconds
+  41   2              pattern = (pattern << 1) | (pattern >> 7);  // Rotate left
+  42   2          }
+  43   1      }
+  44          
+  45          
+  46          void main(void)
+  47          {
+  48   1          while (1){
+  49   2              Part1();   // Call Part1 function to control P2.0 -> P1.1 LED
+  50   2              Part3();   // Call Part3 function to cycle LEDs from RB0 to RB7
+  51   2          }
+  52   1      }
+
+
+C51 COMPILER V9.60.7.0   TEST_BLINK                                                        11/10/2024 11:06:35 PAGE 2   
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     72    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,65 @@
+#include <reg51.h>
+#include <stdio.h>
+
+// Array to store segment patterns for numbers 0-9
+unsigned char digits[] = { 
+    0x00,  // n0: 0000 0000 in binary
+    0x60,  // n1: 0110 0000 in binary
+    0xDA,  // n2: 1101 1010 in binary
+    0xF2,  // n3: 1111 0010 in binary
+    0x66,  // n4: 0110 0110 in binary
+    0xB6,  // n5: 1011 0110 in binary
+    0x7A,  // n6: 0111 1010 in binary
+    0xE0,  // n7: 1110 0000 in binary
+    0xFF,  // n8: 1111 1111 in binary
+    0xE7   // n9: 1110 0111 in binary
+};
+
+void Delay500ms(){
+    // Generate a 0.5-second delay for a 10 MHz clock using Timer 0 in 16-bit mode
+    unsigned char i;
+    for (i = 0; i < 40; i++){   // Loop to generate approximately 0.5 seconds
+        TMOD = 0x01;      // Timer0 mode 1 (16-bit timer)
+        TH0 = 0x3C;       // Load high byte for 50 ms delay
+        TL0 = 0xB0;       // Load low byte for 50 ms delay
+        TR0 = 1;          // Start Timer0
+        while (TF0 == 0); // Wait for Timer0 overflow flag
+        TR0 = 0;          // Stop Timer0
+        TF0 = 0;          // Clear overflow flag
+    }
+}
+
+void main(void){
+    unsigned char unit_count = 0;
+    unsigned char ten_count = 0;
+    unsigned char isCountUp = 1;  // 1 for counting up, 0 for counting down
+
+    while(1){
+        P1 = digits[unit_count];  // Display units on Port 1
+        P2 = digits[ten_count];   // Display tens on Port 2
+        
+        if (isCountUp) {  // Count up logic
+            unit_count++;  // Increment the unit count
+            if (unit_count > 9) { // If units overflow
+                unit_count = 0;    // Reset units
+                ten_count++;       // Increment tens
+                if (ten_count > 9) { // If tens overflow
+                    ten_count = 0;   // Reset tens
+                }
+            }
+        } else {  // Count down logic
+            if (unit_count == 0) {    // If units underflow
+                unit_count = 9;       // Set units to max
+                if (ten_count == 0) { // If tens underflow
+                    ten_count = 9;    // Set tens to max
+                } else {
+                    ten_count--;      // Decrement tens
+                }
+            } else {
+                unit_count--;         // Decrement units
+            }
+        }
+
+        Delay500ms(); // Delay to see the result on display
+    }
+}

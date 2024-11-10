@@ -1,0 +1,93 @@
+C51 COMPILER V9.60.7.0   DIGITAL_LOCK                                                      11/10/2024 11:10:01 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE DIGITAL_LOCK
+OBJECT MODULE PLACED IN .\Objects\digital_lock.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE digital_lock.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\digital_lock.lst) OBJECT(.\Objects\digital_lock.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <stdio.h>
+   3          
+   4          /*
+   5          Digital Lock System Using DIP Switch and LEDs
+   6                  - Circuit: Use the DIP switch as a binary input for a password. 
+   7                  The microcontroller checks the switch settings (password) and 
+   8                  lights up an LED if correct.
+   9                  - Application: A simple digital lock where a specific combination
+  10                  on the DIP switch turns on a “lock opened” LED.
+  11                  - Use Case: Good for understanding digital input and logical 
+  12                  comparisons. Could be used in real-world applications for asmall
+  13                  safe or container.
+  14                  
+  15          Instruction:
+  16          - Set 8 bits dipswitch with pull down resistors to port 1 as follow:
+  17                  Slot [1234 5678] is pinned correspondingly into port 1 line [0123 4567]
+  18          - Set 8 LEDs to port 2 to output the signal
+  19          
+  20          Process:
+  21          - User tries to unlock with different combination of bit_switches
+  22          - If the port matches the password, then all LEDs light on as correct
+  23          - The lock locks itself after certain amount of time and reset the password
+  24          itself for the next unlock
+  25          
+  26          Result is a simple digital lock with an 8_bit dipswitch
+  27          */
+  28          
+  29          void Delay500ms(){
+  30   1          // Generate a 0.5 second delay for a 10 MHz clock using Timer 0 in 16-bit mode
+  31   1          unsigned int i;
+  32   1          for (i = 0; i < 40; i++){   // Loop to generate approximately 0.5 seconds
+  33   2              // Timer 0 delay calculation for 12-clock cycle 8051 with a 10 MHz clock:
+  34   2              // 1 machine cycle = 12 / 10 MHz = 1.2 us
+  35   2              // Max timer count = 65536, thus the timer max duration = 65536 * 1.2 us = 78.432 ms
+  36   2              // Divide 0.5 seconds by 78.432 ms to get around 6.375 cycles, rounding up to 7
+  37   2              TMOD = 0x01;   // Timer0 mode 1 (16-bit timer)
+  38   2              TH0 = 0x3C;    // Load high byte for 50 ms delay
+  39   2              TL0 = 0xB0;    // Load low byte for 50 ms delay
+  40   2              TR0 = 1;       // Start Timer0
+  41   2              while (TF0 == 0);  // Wait for Timer0 overflow flag
+  42   2              TR0 = 0;       // Stop Timer0
+  43   2              TF0 = 0;       // Clear overflow flag
+  44   2          }
+  45   1      }
+  46          
+  47          void main (void){
+  48   1              unsigned int counter = 1;
+  49   1              unsigned char password = 0x63;
+  50   1              const unsigned int threshold = 5;
+  51   1              
+  52   1              while (1){
+  53   2                      P2 = 0x00;
+  54   2                      
+C51 COMPILER V9.60.7.0   DIGITAL_LOCK                                                      11/10/2024 11:10:01 PAGE 2   
+
+  55   2                      if (P1 == password){
+  56   3                              P2 = 0xFF;
+  57   3                              Delay500ms();
+  58   3                              counter++;
+  59   3                      }
+  60   2                      
+  61   2                      if (counter > threshold){
+  62   3                              P1 = P1 ^ 0x34 | (~P1 ^ 0x56);
+  63   3                              password = (password << 1) | (password >> 7);
+  64   3                              counter = 0;
+  65   3                      }
+  66   2              }
+  67   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    101    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =   ----    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

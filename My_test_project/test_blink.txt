@@ -1,0 +1,52 @@
+#include <reg51.h>
+#include <stdio.h>
+
+// Define the specific bits of port1 and port2
+sbit port2_0 = P2^0;  // Port 2, Pin 0
+sbit port1_1 = P1^1;  // Port 1, Pin 1
+
+void Delay500ms(){
+    // Generate a 0.5 second delay for a 10 MHz clock using Timer 0 in 16-bit mode
+    unsigned int i;
+    for (i = 0; i < 40; i++){   // Loop to generate approximately 0.5 seconds
+        // Timer 0 delay calculation for 12-clock cycle 8051 with a 10 MHz clock:
+        // 1 machine cycle = 12 / 10 MHz = 1.2 us
+        // Max timer count = 65536, thus the timer max duration = 65536 * 1.2 us = 78.432 ms
+        // Divide 0.5 seconds by 78.432 ms to get around 6.375 cycles, rounding up to 7
+        TMOD = 0x01;   // Timer0 mode 1 (16-bit timer)
+        TH0 = 0x3C;    // Load high byte for 50 ms delay
+        TL0 = 0xB0;    // Load low byte for 50 ms delay
+        TR0 = 1;       // Start Timer0
+        while (TF0 == 0);  // Wait for Timer0 overflow flag
+        TR0 = 0;       // Stop Timer0
+        TF0 = 0;       // Clear overflow flag
+    }
+}
+
+void Part1(){
+    // If port2_0 receives an ON signal, activate the LED on port1_1
+    if (port2_0 == 1){    // Check if P2.0 is high (ON signal)
+        port1_1 = 1;      // Turn on LED on P1.1
+    } else {
+        port1_1 = 0;      // Turn off LED
+    }
+}
+
+void Part3(){
+    unsigned char pattern = 0xFE;  // Initial pattern: 1111 1110B
+
+    while (1) {  // Infinite loop
+        P1 = pattern;       // Output the current pattern to Port 1
+        Delay500ms();       // Wait for 0.5 seconds
+        pattern = (pattern << 1) | (pattern >> 7);  // Rotate left
+    }
+}
+
+
+void main(void)
+{
+    while (1){
+        Part1();   // Call Part1 function to control P2.0 -> P1.1 LED
+        Part3();   // Call Part3 function to cycle LEDs from RB0 to RB7
+    }
+}

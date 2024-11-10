@@ -1,0 +1,4 @@
+".\Objects\main.obj",
+".\Objects\STARTUP.obj" 
+TO ".\Objects\C_micro" 
+PRINT(".\Listings\C_micro.m51") RAMSIZE(256) 

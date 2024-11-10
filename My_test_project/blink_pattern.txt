@@ -1,0 +1,200 @@
+#include <reg51.h>
+#include <stdio.h>
+
+/* LED patterns display
+There are many patterns to take reference from:
+1. Chaser pattern: One blink at a time, increment and 
+in a loop
+
+2. Bllinking pattern: Light up all the same time and
+dim down all the same time
+
+3. ALternating pattern: Light up every second LED
+and vice versa
+
+4. Knight rider pattern: Light up in sequence and go
+back and forth, in medium pace
+
+5. Wave pattern: Light up in sequence, back and forth,
+fast pace
+
+6. Ping pong pattern: Light up the far_end pair inward
+to the center, and outward again
+
+Instruction:
+- Set 8 LEDs to port 1 for display
+*/
+
+/*
+1. Timer Delay Calculation
+With a 10 MHz clock:
+
+Machine cycle time = 12 / 10 MHz = 1.2 탎
+Each timer tick takes 1.2 탎.
+The 8051's Timer 0 can be set in 16_bit mode (Mode 1), 
+which allows counts from 0x0000 to 0xFFFF (65536 ticks).
+
+2. Calculating Timer Reload Values
+Using these values, we can calculate the timer reload 
+value required to create each delay:
+
+50 ms delay: 
+	50,000탎/1.2탎 = 41667 ticks
+100 ms delay: 
+	100,000탎/1.2탎 = 83333 ticks
+200 ms delay: 
+	200,000탎/1.2탎 = 166667 ticks
+500 ms delay: 
+	500,000탎/1.2탎 = 416667 ticks
+	
+Since the 16_bit timer can count only up to 65536, 
+loops have to be used within the delay function to 
+achieve these longer delays.
+*/
+void Timer0_Delay(unsigned int delay_ms) {
+    unsigned char i;  // Loop counter
+    unsigned int reload_count;
+
+    switch (delay_ms) {
+        case 50:
+            reload_count = 1;  // Approximately 50 ms with 1 iteration
+            TH0 = 0x3C;        // Load Timer0 high byte for 50 ms
+            TL0 = 0xB0;        // Load Timer0 low byte for 50 ms
+            break;
+        case 100:
+            reload_count = 2;  // Approximately 100 ms with 2 iterations of 50 ms
+            TH0 = 0x3C;
+            TL0 = 0xB0;
+            break;
+        case 200:
+            reload_count = 4;  // Approximately 200 ms with 4 iterations of 50 ms
+            TH0 = 0x3C;
+            TL0 = 0xB0;
+            break;
+        default: // Default to 500 ms
+            reload_count = 10;  // Approximately 500 ms with 10 iterations of 50 ms
+            TH0 = 0x3C;
+            TL0 = 0xB0;
+    }
+
+    TMOD = 0x01; // Set Timer0 to 16-bit mode (Mode 1)
+
+    for (i = 0; i < reload_count; i++) {
+        TR0 = 1;         // Start Timer0
+        while (TF0 == 0); // Wait for overflow
+        TR0 = 0;         // Stop Timer0
+        TF0 = 0;         // Clear overflow flag
+    }
+}
+
+void chaser_pattern(unsigned int cycle){
+	unsigned char sequence = 0x01;// 0000 0001 equivalent
+	unsigned int i = 0;
+	for (i = 0; i < cycle; i++){
+		P1 = sequence;
+		// Shift 1_bit to the left
+		sequence = (sequence << 1) | (sequence >> 7);
+		Timer0_Delay(200);
+	}
+}
+void blinking_pattern(unsigned int cycle) {
+	unsigned int i = 0;
+	for (i = 0; i < cycle; i++){
+		P1 = 0xFF;
+		Timer0_Delay(500);
+		P1 = 0x00;
+	}
+}
+void alternating_pattern(unsigned int cycle) {
+	unsigned char sequence = 0xAA;// 1010 1010 equivalent
+	unsigned int i = 0;
+	
+	for (i = 0; i < cycle; i++){
+		P1 = sequence;
+		// Shift 1_bit to the right
+		sequence = (sequence >> 1) | (sequence << 7);
+		Timer0_Delay(200);
+	}
+}
+void knight_rider_pattern(unsigned int cycle) {
+	unsigned char sequence = 0xFE;// 0000 0001 equivalent
+	unsigned char isReverse = 0;
+	unsigned int counter = 0;
+	unsigned int i = 0;
+	
+	for (i = 0; i < cycle; i++){
+		P1 = sequence;	// Output the port signal
+		Timer0_Delay(500);
+		
+		if (counter > 8){
+			isReverse = ~isReverse; // Complement condition
+			counter = isReverse ? 6 : 0;
+		}
+		
+		if (isReverse == 1){
+			// Shift 1_bit to the right
+			sequence = (sequence >> 1) | (sequence << 7);
+			counter--;
+		} else {
+			// Shift 1_bit to the left
+			sequence = (sequence << 1) | (sequence >> 7);
+			counter++;
+		}
+	}
+}
+void wave_pattern(unsigned int cycle) {
+	unsigned char sequence = 0xFE;// 0000 0001 equivalent
+	unsigned char isReverse = 0;
+	unsigned int i = 0;
+	unsigned int counter = 0;
+	
+	for (i = 0; i < cycle; i++){
+		P1 = sequence;	// Output the port signal
+		Timer0_Delay(500);
+		
+		
+		if (counter > 8){
+			isReverse = ~isReverse; // Complement condition
+		}
+		
+		if (isReverse == 1){
+			// Shift 1_bit to the right
+			sequence = (sequence >> 1) | (sequence << 7);
+			counter--;
+		} else {
+			// Shift 1_bit to the left
+			sequence = (sequence << 1) | (sequence >> 7);
+			counter++;
+		}
+	}
+}
+void ping_pong_pattern(unsigned int cycle) {
+	unsigned char pattern = 0x81;  // Initial pattern: 1000 0001
+    unsigned char direction = 0;   // Direction: 1 for left, 0 for right
+	unsigned int i = 0;
+	
+	for (i = 0; i < cycle; i++) {
+		P1 = pattern;
+		Timer0_Delay(500);
+		
+		if (pattern == 0x18 || pattern == 0x81){
+			direction = ~ direction; // Reverse condition
+		}
+		if (direction){ // Shift 1_bit left
+			pattern = (pattern << 1) | (pattern >> 7);
+		} else { // Shift 1_bit right
+			pattern = (pattern >> 1) | (pattern << 7);
+		}
+	}
+}
+	
+void main(){
+	while(1){
+		chaser_pattern(10);
+		blinking_pattern(10);
+		alternating_pattern(10);
+		knight_rider_pattern(10);
+		wave_pattern(10);
+		ping_pong_pattern(10);
+	}
+}

@@ -1,0 +1,35 @@
+/*
+Binary Counter Display with LEDs and DIP Switches
+	- Circuit: Connect each of the 8 DIP switch outputs to 8 LEDs 
+	through BJTs to act as current drivers.
+	- Application: This circuit can serve as a binary display or 
+	simple input-output test board. When a switch is toggled on, 
+	the corresponding LED lights up, showing the binary representation.
+	- Use Case: This setup is ideal for learning about binary 
+	counting and logic, where each switch represents a binary_bit.
+	
+Instruction:
+- Set 8 bits dipswitch with pull down resistors to port 1 as follow:
+	Slot [1234 5678] is pinned correspondingly into port 1 line [0123 4567]
+- Set 8 LEDs to port 2 to output the signal
+
+Process:
+- As one line in the sending port a 1 digital signal, the corresponding
+receiving port line output the signal to turn ON / off the LED
+*/
+
+void main (void) {
+	while (1){
+		P2 = ~P1;
+		/*
+		Depending on the circuit topology, the LEDs many already receive
+		an ON signal, so when the micro controller sends the 1 digtial
+		signal. The LEDs turn OFF as a result of current cancellation.
+		
+		If the circuit is set to positive by default
+			- NOT (complement) every bits in the sending port
+		If the circuit is set to negative by default
+			- Deliver as it is in the output port
+		*/
+	}
+}
