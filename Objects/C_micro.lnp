@@ -1,0 +1,5 @@
+".\Objects\STARTUP.obj",
+".\Objects\test_blink.obj",
+".\Objects\number_muxer.obj" 
+TO ".\Objects\C_micro" 
+PRINT(".\Listings\C_micro.m51") RAMSIZE(256) 

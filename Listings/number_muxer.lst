@@ -1,0 +1,130 @@
+C51 COMPILER V9.60.7.0   NUMBER_MUXER                                                      11/09/2024 21:51:08 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE NUMBER_MUXER
+OBJECT MODULE PLACED IN .\Objects\number_muxer.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE number_muxer.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listi
+                    -ngs\number_muxer.lst) OBJECT(.\Objects\number_muxer.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          #include <stdio.h>
+   3          
+   4          /* INSTRUCTION
+   5          To build the circuit board:
+   6          - Two annode 7 segments number displays is wired
+   7          - VCC to power to number display is yeilded directly from DC power source (along with self-customed contro
+             -l circuit)
+   8          - The pins are wired as "abcd efg(dot)" corresponding to "0123 4567"
+   9          
+  10          To test the circuit:
+  11          - First, turn on all the pins to by setting "1111 1111" or "0000 0000"
+  12          - Take reference from schematic of the number display or manual testing to adjust the display to show a nu
+             -mber of interest
+  13          
+  14                                                  ____A____
+  15                                             /        /
+  16                                           F/        /B
+  17                                           /____G___/
+  18                                          /        /
+  19                                    E/        /C   _
+  20                                    /____D___/    |_| DP   
+  21          
+  22          Assume the number display is positive driven and all configurations is set up properly
+  23          The encoding is written in hexadecimal to compile
+  24          
+  25          unsigned char number0 = 0x00;  // 0000 0000 in binary
+  26          unsigned char number1 = 0x60;  // 0110 0000 in binary
+  27          unsigned char number2 = 0xDA;  // 1101 1010 in binary
+  28          unsigned char number3 = 0xF2;  // 1111 0010 in binary
+  29          unsigned char number4 = 0x66;  // 0110 0110 in binary
+  30          unsigned char number5 = 0xB6;  // 1011 0110 in binary
+  31          unsigned char number6 = 0x7A;  // 0111 1010 in binary
+  32          unsigned char number7 = 0xE0;  // 1110 0000 in binary
+  33          unsigned char number8 = 0xFF;  // 1111 1111 in binary
+  34          unsigned char number9 = 0xE7;  // 1110 0111 in binary
+  35          
+  36          
+  37          Test application number counter UP/down
+  38          
+  39          Description:
+  40                  There are 2 annode 7-segment built for this application.
+  41                  The unit counter is placed in port 1
+  42                  The ten counter is placed in port 2
+  43          Function:
+  44                  As the display represent the unit in the number finishes one round of 0-9,
+  45                          - The number display that represents the ten unit increases by 1
+  46                                          - If the display reaches 99, return to 00
+  47                          - The number display in the unit reset the round from 0-9 again
+  48          */
+  49          
+  50          // Array to store segment patterns for numbers 0-9
+  51          unsigned char digits[] = { 
+  52              0x00,  // n0: 0000 0000 in binary
+C51 COMPILER V9.60.7.0   NUMBER_MUXER                                                      11/09/2024 21:51:08 PAGE 2   
+
+  53              0x60,  // n1: 0110 0000 in binary
+  54              0xDA,  // n2: 1101 1010 in binary
+  55              0xF2,  // n3: 1111 0010 in binary
+  56              0x66,  // n4: 0110 0110 in binary
+  57              0xB6,  // n5: 1011 0110 in binary
+  58              0x7A,  // n6: 0111 1010 in binary
+  59              0xE0,  // n7: 1110 0000 in binary
+  60              0xFF,  // n8: 1111 1111 in binary
+  61              0xE7   // n9: 1110 0111 in binary
+  62          };
+  63          
+  64          void Delay500ms(){
+  65   1          // Generate a 0.5 second delay for a 10 MHz clock using Timer 0 in 16-bit mode
+  66   1          unsigned char i;
+  67   1          for (i = 0; i < 40; i++){   // Loop to generate approximately 0.5 seconds
+  68   2              // Timer 0 delay calculation for 12-clock cycle 8051 with a 10 MHz clock:
+  69   2              // 1 machine cycle = 12 / 10 MHz = 1.2 us
+  70   2              // Max timer count = 65536, thus the timer max duration = 65536 * 1.2 us = 78.432 ms
+  71   2              // Divide 0.5 seconds by 78.432 ms to get around 6.375 cycles, rounding up to 7
+  72   2                      TMOD = 0x01;            // Timer0 mode 1 (16-bit timer)
+  73   2                      TH0 = 0x3C;             // Load high byte for 50 ms delay
+  74   2                      TL0 = 0xB0;                 // Load low byte for 50 ms delay
+  75   2              TR0 = 1;            // Start Timer0
+  76   2              while (TF0 == 0);   // Wait for Timer0 overflow flag
+  77   2              TR0 = 0;                // Stop Timer0
+  78   2              TF0 = 0;                // Clear overflow flag
+  79   2          }
+  80   1      }
+  81          
+  82          
+  83          void main(void){
+  84   1              unsigned char unit_count = 0;
+  85   1              unsigned char ten_count = 0;
+  86   1              
+  87   1              while(1){
+  88   2                      P1 = digits[unit_count];
+  89   2                      P2 = digits[ten_count];
+  90   2                      
+  91   2                      unit_count++;   // Increment the unit by 1 in every iteration
+  92   2                      if (unit_count > 9 && !(ten_count > 9)){// Gatekeep the value within 99
+  93   3                              unit_count = 0;
+  94   3                              ten_count++;
+  95   3                      } else {        // Total reset value to 00 after 99 count
+  96   3                              unit_count = 0;
+  97   3                              ten_count = 0;
+  98   3                      }
+  99   2                      
+ 100   2                      Delay500ms(); //Delay to see the result on display
+ 101   2              }
+ 102   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =     74    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     10    ----
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =   ----    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

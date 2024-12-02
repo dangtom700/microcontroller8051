@@ -1,0 +1,177 @@
+A51 MACRO ASSEMBLER  BLINKING                                                             11/24/2024 13:51:40 PAGE     1
+
+
+MACRO ASSEMBLER A51 V8.2.7.0
+OBJECT MODULE PLACED IN .\Objects\blinking.obj
+ASSEMBLER INVOKED BY: C:\Keil_v5\C51\BIN\A51.EXE blinking.asm SET(SMALL) DEBUG PRINT(.\Listings\blinking.lst) OBJECT(.\O
+                      bjects\blinking.obj) EP
+
+LOC  OBJ            LINE     SOURCE
+
+                       1     ; This program is used to control PWM of a device
+                       2     ; PWM is controlled by forcing the device to work % of the cycle and idle in (1-%)
+                       3     
+0000                   4     ORG 000H
+0000                   5             start:
+0000 20A309            6                     JB P2.3, CASE1XX
+0003 30A300            7                     JNB P2.3, CASE0XX
+0006                   8             CASE0XX: ;0XX
+0006 20A40F            9                     JB P2.4, CASE01X
+0009 30A406           10                     JNB P2.4, CASE00X
+000C                  11             CASE1XX: ;1XX
+000C 20A415           12                     JB P2.4, CASE11X
+000F 30A40C           13                     JNB P2.4, CASE10X
+0012                  14             CASE00X: ;00X
+0012 20A51B           15                     JB P2.5, DC10 ; 001
+0015 30A514           16                     JNB P2.5, DC0 ; 000
+0018                  17             CASE01X: ;01X
+0018 20A535           18                     JB P2.5, DC40 ; 011
+001B 30A520           19                     JNB P2.5, DC30 ; 010
+001E                  20             CASE10X: ;10X
+001E 20A553           21                     JB P2.5, DC70 ; 101
+0021 30A53E           22                     JNB P2.5, DC50 ; 100
+0024                  23             CASE11X:
+0024 20A571           24                     JB P2.5, DC100 ; 111
+0027 30A55C           25                     JNB P2.5, DC80 ; 110
+002A 80D4             26                     JMP start
+                      27                     
+                      28     
+                      29             ;DUTY CYCLES DEFINED
+002C                  30             DC0:
+002C C2A6             31                     CLR P2.6
+002E 80D0             32                     JMP start
+0030                  33             DC10:
+0030 D2A6             34                             SETB P2.6
+0032 11AA             35                             ACALL DELAY100u
+0034 C2A6             36                             CLR P2.6
+0036 7909             37                             MOV R1, #9
+0038 11AA             38                     HERE10: ACALL DELAY100u
+003A D9FC             39                             DJNZ R1, HERE10
+003C 80C2             40                             JMP start
+003E                  41             DC30:
+003E D2A6             42                             SETB P2.6
+0040 7903             43                             MOV R1, #3
+0042                  44                     HERE301: 
+0042 11AA             45                             ACALL DELAY100u
+0044 D920             46                             DJNZ R1, HERE501
+0046 C2A6             47                             CLR P2.6
+0048 7907             48                             MOV R1, #7
+004A                  49                     HERE302: 
+004A 11AA             50                             ACALL DELAY100u
+004C D920             51                             DJNZ R1, HERE502
+004E 80B0             52                             JMP start
+0050                  53             DC40:
+0050 D2A6             54                             SETB P2.6
+0052 7904             55                             MOV R1, #4
+0054                  56                     HERE401: 
+0054 11AA             57                             ACALL DELAY100u
+A51 MACRO ASSEMBLER  BLINKING                                                             11/24/2024 13:51:40 PAGE     2
+
+0056 D90E             58                             DJNZ R1, HERE501
+0058 C2A6             59                             CLR P2.6
+005A 7906             60                             MOV R1, #6
+005C                  61                     HERE402: 
+005C 11AA             62                             ACALL DELAY100u
+005E D90E             63                             DJNZ R1, HERE502
+0060 809E             64                             JMP start
+0062                  65             DC50:
+0062 D2A6             66                             SETB P2.6
+0064 7905             67                             MOV R1, #5
+0066                  68                     HERE501: 
+0066 11AA             69                             ACALL DELAY100u
+0068 D9FC             70                             DJNZ R1, HERE501
+006A C2A6             71                             CLR P2.6
+006C 7905             72                             MOV R1, #5
+006E                  73                     HERE502: 
+006E 11AA             74                             ACALL DELAY100u
+0070 D9FC             75                             DJNZ R1, HERE502
+0072 808C             76                             JMP start
+0074                  77             DC70:
+0074 D2A6             78                             SETB P2.6
+0076 7907             79                             MOV R1, #7
+0078                  80                     HERE701: 
+0078 11AA             81                             ACALL DELAY100u
+007A D9EA             82                             DJNZ R1, HERE501
+007C C2A6             83                             CLR P2.6
+007E 7903             84                             MOV R1, #3
+0080                  85                     HERE702: 
+0080 11AA             86                             ACALL DELAY100u
+0082 D9EA             87                             DJNZ R1, HERE502
+0084 0100             88                             JMP start
+0086                  89             DC80:
+0086 D2A6             90                             SETB P2.6
+0088 7908             91                             MOV R1, #8
+008A                  92                     HERE801: 
+008A 11AA             93                             ACALL DELAY100u
+008C D9D8             94                             DJNZ R1, HERE501
+008E C2A6             95                             CLR P2.6
+0090 7902             96                             MOV R1, #2
+0092                  97                     HERE802: 
+0092 11AA             98                             ACALL DELAY100u
+0094 D9D8             99                             DJNZ R1, HERE502
+0096 0100            100                             JMP start
+0098                 101             DC100:
+0098 D2A6            102                             SETB P2.6
+009A 790A            103                             MOV R1, #10
+009C                 104                     HERE1001: 
+009C 11AA            105                             ACALL DELAY100u
+009E D9C6            106                             DJNZ R1, HERE501
+00A0 C2A6            107                             CLR P2.6
+00A2 7900            108                             MOV R1, #0
+00A4                 109                     HERE1002: 
+00A4 11AA            110                             ACALL DELAY100u
+00A6 D9C6            111                             DJNZ R1, HERE502
+00A8 0100            112                             JMP start
+                     113     ;DELAY DEFINED
+00AA                 114     DELAY100u: 
+00AA 7A64            115             MOV R2,#100
+00AC                 116             HERE:
+00AC 00              117             NOP
+00AD DAFD            118             DJNZ R2,HERE
+00AF 22              119             RET
+                     120     END
+A51 MACRO ASSEMBLER  BLINKING                                                             11/24/2024 13:51:40 PAGE     3
+
+SYMBOL TABLE LISTING
+------ ----- -------
+
+
+N A M E             T Y P E  V A L U E   ATTRIBUTES
+
+CASE00X. . . . . .  C ADDR   0012H   A   
+CASE01X. . . . . .  C ADDR   0018H   A   
+CASE0XX. . . . . .  C ADDR   0006H   A   
+CASE10X. . . . . .  C ADDR   001EH   A   
+CASE11X. . . . . .  C ADDR   0024H   A   
+CASE1XX. . . . . .  C ADDR   000CH   A   
+DC0. . . . . . . .  C ADDR   002CH   A   
+DC10 . . . . . . .  C ADDR   0030H   A   
+DC100. . . . . . .  C ADDR   0098H   A   
+DC30 . . . . . . .  C ADDR   003EH   A   
+DC40 . . . . . . .  C ADDR   0050H   A   
+DC50 . . . . . . .  C ADDR   0062H   A   
+DC70 . . . . . . .  C ADDR   0074H   A   
+DC80 . . . . . . .  C ADDR   0086H   A   
+DELAY100U. . . . .  C ADDR   00AAH   A   
+HERE . . . . . . .  C ADDR   00ACH   A   
+HERE10 . . . . . .  C ADDR   0038H   A   
+HERE1001 . . . . .  C ADDR   009CH   A   
+HERE1002 . . . . .  C ADDR   00A4H   A   
+HERE301. . . . . .  C ADDR   0042H   A   
+HERE302. . . . . .  C ADDR   004AH   A   
+HERE401. . . . . .  C ADDR   0054H   A   
+HERE402. . . . . .  C ADDR   005CH   A   
+HERE501. . . . . .  C ADDR   0066H   A   
+HERE502. . . . . .  C ADDR   006EH   A   
+HERE701. . . . . .  C ADDR   0078H   A   
+HERE702. . . . . .  C ADDR   0080H   A   
+HERE801. . . . . .  C ADDR   008AH   A   
+HERE802. . . . . .  C ADDR   0092H   A   
+P2 . . . . . . . .  D ADDR   00A0H   A   
+START. . . . . . .  C ADDR   0000H   A   
+
+
+REGISTER BANK(S) USED: 0 
+
+
+ASSEMBLY COMPLETE.  0 WARNING(S), 0 ERROR(S)
