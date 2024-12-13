@@ -1,0 +1,180 @@
+#include <reg51.h>
+#include <stdio.h>
+
+#define FOSC 10000000  // Oscillator frequency (10 MHz)
+#define TIMER_PRESCALER 12 // 8051 Timer runs at (FOSC / 12)
+
+unsigned char digits[] = {// Array to store segment patterns for numbers 0-9
+	0xC0, // HEX for 0
+    0xF9, // HEX for 1
+    0xA4, // HEX for 2
+    0xB0, // HEX for 3
+    0x99, // HEX for 4
+    0x92, // HEX for 5
+    0x82, // HEX for 6
+    0xF8, // HEX for 7
+    0x80, // HEX for 8
+    0x90, // HEX for 9
+	0xFF  // HEX for [Blank]
+};
+sbit TACH_PIN = P0^4;  // Assuming tachometer signal is connected to pin P3.0
+sbit RA0 = P0^0;
+sbit RA1 = P0^1;
+sbit RA2 = P0^2;
+sbit PWM_pin = P3^0;
+
+unsigned int readFanRPM(unsigned char numEdges) {
+    unsigned int timerStart = 0;
+    unsigned int timerEnd = 0;
+    unsigned int timeDifference = 0;
+    unsigned long rpm = 0; // Use 32-bit for large calculations
+    unsigned char edgeCount = 0;
+
+    // Configure Timer 1 in Mode 1 (16-bit timer)
+    TMOD = 0x10;  // Timer 1 in mode 1
+    TH1 = 0x00;   // Clear high byte
+    TL1 = 0x00;   // Clear low byte
+
+    // Ignore the first falling edge
+    while (TACH_PIN);  // Wait while pin is high
+    while (!TACH_PIN); // Wait while pin is low
+
+    // Start Timer 1
+    TR1 = 1;
+
+    // Count the next numEdges falling edges
+    while (edgeCount < numEdges) {
+        while (TACH_PIN);  // Wait while pin is high
+        while (!TACH_PIN); // Wait while pin is low
+        edgeCount++;
+    }
+
+    // Stop Timer 1 after counting the edges
+    TR1 = 0;
+
+    // Read Timer 1 value
+    timerEnd = (TH1 << 8) | TL1;
+
+    // Handle overflow (if end count is less than start count)
+    if (timerEnd >= timerStart) {
+        timeDifference = timerEnd - timerStart;
+    } else {
+        timeDifference = (65536 - timerStart) + timerEnd; // Account for overflow
+    }
+
+    // Convert time difference to microseconds
+    timeDifference = (timeDifference * 12) / (FOSC / 1000000); // µs per tick
+
+    // Calculate RPM
+    if (timeDifference > 0) {
+        rpm = (60000000UL * numEdges) / (timeDifference * 2); // Factor in number of edges
+    }
+
+    return (unsigned int)rpm; // Return RPM as an unsigned int
+}
+
+
+void timer0_delay_100us(unsigned int percent) {// 1% duty cycle
+	unsigned int i = 0;
+	for (i = 0; i < percent; i++){
+		TMOD = 0x01;  // Timer 0, Mode 1 (16-bit timer)
+		TH0 = 0xFF;   // Load high byte of the preload value
+		TL0 = 0xAC;   // Load low byte of the preload value
+		TR0 = 1;      // Start Timer 0
+		while (TF0 == 0);  // Wait for the timer to overflow
+		TR0 = 0;      // Stop Timer 0
+		TF0 = 0;      // Clear the Timer 0 overflow flag
+	}
+}
+
+void delay_flicker() {
+    TMOD = 0x01;    // Timer 0 in Mode 1 (16_bit timer)
+    TH0 = 0xFA;     // Load high byte of the preload value (0xF6E4)
+    TL0 = 0xA3;     // Load low byte of the preload value
+    TR0 = 1;        // Start Timer 0
+    while (TF0 == 0); // Wait for Timer 0 overflow
+    TR0 = 0;        // Stop Timer 0
+    TF0 = 0;        // Clear overflow flag
+}
+
+
+// Function to display a number on a 7-segment display
+void display_num(unsigned int num) {
+    unsigned char sequence = 0x01;  // Start with hundreds display selector
+    unsigned char holder = 0;       // To store individual digits
+    unsigned char leading_zero = 1; // Flag for leading zeros
+    unsigned int i = 0;             // Initialize the iteration
+
+    for (i = 0; i < 4; i++) {
+        holder = num % 10; // Extract the least significant digit
+
+        if (holder == 0 && num < 10) {
+            P1 = digits[10]; // Display blank for remaining digits
+        } else {
+            P1 = digits[holder];
+        }
+
+        P2 = sequence;       // Activate the current display
+        delay_flicker();     // Delay for digit display
+        num /= 10;           // Move to the next digit
+        sequence <<= 1;      // Shift selector to the next display
+    }
+}
+
+int On_time_duty_cycle(){
+	if (RA0 == 1){
+		if (RA1 == 1){
+			if (RA2 == 1){
+				return 100;// 111B
+			} else {
+				return 90;// 110B
+			}
+		} else {
+			if (RA2 == 1){
+				return 80;// 101B
+			} else {
+				return 60;// 100B
+			}
+		}
+	} else {
+		if (RA1 == 1){
+			if (RA2 == 1){
+				return 40;// 011B
+			} else {
+				return 20;// 010B
+			}
+		} else {
+			if (RA2 == 1){
+				return 10;// 001B
+			} else {
+				return 0;// 000B
+			}
+		}
+	}
+	
+	return 10;
+}
+
+void main(void) {
+	unsigned int i = 0;
+	float temp = 0;
+	unsigned int RPM = 0;
+	unsigned int ON_DUTY_CYCLE = 0;
+	unsigned int sample_size = 2000;
+	unsigned int count = 0;
+	unsigned int on_time = 0;
+	unsigned int off_time = 0;
+	
+    while (1){ // Whole cycle is 20.2 ms
+		ON_DUTY_CYCLE = On_time_duty_cycle();
+		
+		// PWM time pulse solved. PWM cycle is 12.8 ms
+		off_time = 100 - ON_DUTY_CYCLE;
+		PWM_pin = 1;
+		timer0_delay_100us(ON_DUTY_CYCLE);
+		PWM_pin = 0;
+		timer0_delay_100us(off_time);
+		
+		//display_num(RPM);
+	}
+}

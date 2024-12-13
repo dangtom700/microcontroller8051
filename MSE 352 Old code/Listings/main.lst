@@ -1,0 +1,245 @@
+C51 COMPILER V9.60.7.0   MAIN                                                              11/28/2024 15:33:50 PAGE 1   
+
+
+C51 COMPILER V9.60.7.0, COMPILATION OF MODULE MAIN
+OBJECT MODULE PLACED IN .\Objects\main.obj
+COMPILER INVOKED BY: C:\Keil_v5\C51\BIN\C51.EXE main.c OPTIMIZE(8,SPEED) BROWSE DEBUG OBJECTEXTEND PRINT(.\Listings\main
+                    -.lst) OBJECT(.\Objects\main.obj)
+
+line level    source
+
+   1          #include <reg51.h>
+   2          
+   3          #define FOSC 10000000      // Oscillator frequency (10 MHz)
+   4          #define TIMER_PRESCALER 12 // 8051 Timer runs at (FOSC / 12)
+   5          
+   6          unsigned char digits[] = {
+   7              0xC0, // HEX for 0
+   8              0xF9, // HEX for 1
+   9              0xA4, // HEX for 2
+  10              0xB0, // HEX for 3
+  11              0x99, // HEX for 4
+  12              0x92, // HEX for 5
+  13              0x82, // HEX for 6
+  14              0xF8, // HEX for 7
+  15              0x80, // HEX for 8
+  16              0x90, // HEX for 9
+  17              0xFF  // HEX for [Blank]
+  18          };
+  19          
+  20          sbit TACH_PIN = P0^4;   // Tachometer signal input
+  21          sbit RA0 = P0^0;        // DIP Switch 0
+  22          sbit RA1 = P0^1;        // DIP Switch 1
+  23          sbit RA2 = P0^2;        // DIP Switch 2
+  24          sbit PWM_pin = P3^0;    // PWM Output pin
+  25          
+  26          unsigned int global_display_num = 0; // Number to display on 7-segment
+  27          unsigned char digit_index = 0;       // Current digit being displayed (0-3)
+  28          unsigned int PWM_on_time = 0;        // On-time for PWM signal
+  29          unsigned int PWM_off_time = 0;       // Off-time for PWM signal
+  30          bit pwm_state = 0;                   // Current state of the PWM pin (ON/OFF)
+  31          
+  32          // Function to calculate RPM
+  33          unsigned int readFanRPM(unsigned char numEdges) {
+  34   1          unsigned int timeDifference = 0;
+  35   1          unsigned long rpm = 0; // Use 32-bit for large calculations
+  36   1          unsigned char edgeCount = 0;
+  37   1      
+  38   1          // Configure Timer 1 in Mode 1 (16-bit timer)
+  39   1          TMOD &= 0x0F; // Clear Timer 1 bits
+  40   1          TMOD |= 0x10; // Timer 1 in Mode 1
+  41   1      
+  42   1          TH1 = 0x00;   // Clear high byte
+  43   1          TL1 = 0x00;   // Clear low byte
+  44   1      
+  45   1          // Ignore the first falling edge
+  46   1          while (TACH_PIN);  // Wait while pin is high
+  47   1          while (!TACH_PIN); // Wait while pin is low
+  48   1      
+  49   1          // Start Timer 1
+  50   1          TR1 = 1;
+  51   1      
+  52   1          // Count the next `numEdges` falling edges
+  53   1          while (edgeCount < numEdges) {
+  54   2              while (TACH_PIN);  // Wait while pin is high
+C51 COMPILER V9.60.7.0   MAIN                                                              11/28/2024 15:33:50 PAGE 2   
+
+  55   2              while (!TACH_PIN); // Wait while pin is low
+  56   2              edgeCount++;
+  57   2          }
+  58   1      
+  59   1          // Stop Timer 1 after counting the edges
+  60   1          TR1 = 0;
+  61   1      
+  62   1          // Read Timer 1 value
+  63   1          timeDifference = (TH1 << 8) | TL1;
+  64   1      
+  65   1          // Convert time difference to microseconds
+  66   1          timeDifference = (timeDifference * TIMER_PRESCALER) / (FOSC / 1000000); // µs per tick
+  67   1      
+  68   1          // Calculate RPM
+  69   1          if (timeDifference > 0) {
+  70   2              rpm = (60000000UL * numEdges) / (timeDifference * 2); // Factor in number of edges
+  71   2          }
+  72   1      
+  73   1          return (unsigned int)rpm; // Return RPM as an unsigned int
+  74   1      }
+  75          
+  76          void delay_flicker() {
+  77   1          TMOD &= 0xF0;   // Clear lower 4 bits to configure Timer 0
+  78   1          TMOD |= 0x02;   // Timer 0 in Mode 2 (8-bit auto-reload)
+  79   1          TH0 = 0xFA;     // Load reload value for ~1 ms delay (assuming 10 MHz clock)
+  80   1          TL0 = 0xFA;     // Initial timer value
+  81   1          TR0 = 1;        // Start Timer 0
+  82   1          while (TF0 == 0); // Wait for Timer 0 overflow
+  83   1          TR0 = 0;        // Stop Timer 0
+  84   1          TF0 = 0;        // Clear overflow flag
+  85   1      }
+  86          /*
+  87          // Function to display a number on a 7-segment display
+  88          void display_num(unsigned int num) {
+  89              unsigned char sequence = 0x01;  // Start with hundreds display selector
+  90              unsigned char holder = 0;       // To store individual digits
+  91              unsigned char leading_zero = 1; // Flag for leading zeros
+  92              unsigned int i = 0;             // Initialize the iteration
+  93          
+  94              for (i = 0; i < 4; i++) {
+  95                  holder = num % 10; // Extract the least significant digit
+  96          
+  97                  if (holder == 0 && num < 10) {
+  98                      P1 = digits[10]; // Display blank for remaining digits
+  99                  } else {
+ 100                      P1 = digits[holder];
+ 101                  }
+ 102          
+ 103                  P2 = sequence;       // Activate the current display
+ 104                  //delay_flicker();     // Delay for digit display
+ 105                  num /= 10;           // Move to the next digit
+ 106                  sequence <<= 1;      // Shift selector to the next display
+ 107                          delay_flicker();
+ 108              }
+ 109          }
+ 110          */
+ 111          
+ 112          // Function to determine on-time duty cycle from inputs
+ 113          unsigned int On_time_duty_cycle(){
+ 114   1              if (RA0 == 1){
+ 115   2                      if (RA1 == 1){
+ 116   3                              if (RA2 == 1){
+C51 COMPILER V9.60.7.0   MAIN                                                              11/28/2024 15:33:50 PAGE 3   
+
+ 117   4                                      return 10;// 111B
+ 118   4                              } else {
+ 119   4                                      return 9;// 110B
+ 120   4                              }
+ 121   3                      } else {
+ 122   3                              if (RA2 == 1){
+ 123   4                                      return 8;// 101B
+ 124   4                              } else {
+ 125   4                                      return 6;// 100B
+ 126   4                              }
+ 127   3                      }
+ 128   2              } else {
+ 129   2                      if (RA1 == 1){
+ 130   3                              if (RA2 == 1){
+ 131   4                                      return 4;// 011B
+ 132   4                              } else {
+ 133   4                                      return 2;// 010B
+ 134   4                              }
+ 135   3                      } else {
+ 136   3                              if (RA2 == 1){
+ 137   4                                      return 1;// 001B
+ 138   4                              } else {
+ 139   4                                      return 0;// 000B
+ 140   4                              }
+ 141   3                      }
+ 142   2              }
+ 143   1              
+ 144   1              return 10;
+ 145   1      }
+ 146          
+ 147          // Timer 0 Interrupt Service Routine for 7-segment multiplexing
+ 148          void timer0_ISR(void) interrupt 1 {
+ 149   1          static unsigned int temp_display_num = 0;
+ 150   1          unsigned char digit;
+ 151   1      
+ 152   1          if (digit_index == 0) {
+ 153   2              temp_display_num = global_display_num; // Take a snapshot of the number
+ 154   2          }
+ 155   1      
+ 156   1          digit = temp_display_num % 10;
+ 157   1          temp_display_num /= 10;
+ 158   1      
+ 159   1          P1 = digits[digit];    // Load segment data
+ 160   1          P2 = 1 << digit_index; // Select corresponding display
+ 161   1          digit_index = (digit_index + 1) % 4;
+ 162   1      }
+ 163          
+ 164          // Timer 1 Interrupt Service Routine for PWM
+ 165          void timer1_ISR(void) interrupt 3 {
+ 166   1          if (pwm_state) {
+ 167   2              // Turn off the PWM pin
+ 168   2              PWM_pin = 0;
+ 169   2              pwm_state = 0;
+ 170   2      
+ 171   2              // Load off-time
+ 172   2              TH1 = (65536 - ((PWM_off_time * FOSC) / (TIMER_PRESCALER * 1000000))) >> 8;
+ 173   2              TL1 = (65536 - ((PWM_off_time * FOSC) / (TIMER_PRESCALER * 1000000))) & 0xFF;
+ 174   2          } else {
+ 175   2              // Turn on the PWM pin
+ 176   2              PWM_pin = 1;
+ 177   2              pwm_state = 1;
+ 178   2      
+C51 COMPILER V9.60.7.0   MAIN                                                              11/28/2024 15:33:50 PAGE 4   
+
+ 179   2              // Load on-time
+ 180   2              TH1 = (65536 - ((PWM_on_time * FOSC) / (TIMER_PRESCALER * 1000000))) >> 8;
+ 181   2              TL1 = (65536 - ((PWM_on_time * FOSC) / (TIMER_PRESCALER * 1000000))) & 0xFF;
+ 182   2          }
+ 183   1      
+ 184   1          TF1 = 0; // Clear the interrupt flag
+ 185   1      }
+ 186          
+ 187          // Main function
+ 188          void main(void) {
+ 189   1          unsigned int RPM = 0;
+ 190   1          unsigned int duty_cycle = 0;
+ 191   1      
+ 192   1          // Configure Timer 0 for 7-segment multiplexing (1 ms interrupts)
+ 193   1          TMOD |= 0x02;  // Timer 0 in mode 2 (8-bit auto-reload)
+ 194   1          TH0 = 0xFA;    // Reload value for 1 ms (assuming 10 MHz clock)
+ 195   1          TL0 = 0xFA;
+ 196   1          ET0 = 1;       // Enable Timer 0 interrupt
+ 197   1          TR0 = 1;       // Start Timer 0
+ 198   1      
+ 199   1          // Configure Timer 1 for PWM
+ 200   1          TMOD |= 0x10;  // Timer 1 in mode 1 (16-bit)
+ 201   1          ET1 = 1;       // Enable Timer 1 interrupt
+ 202   1          TR1 = 1;       // Start Timer 1
+ 203   1      
+ 204   1          EA = 1;        // Enable global interrupts
+ 205   1      
+ 206   1          while (1) {
+ 207   2              // Update duty cycle based on DIP switch values
+ 208   2              duty_cycle = On_time_duty_cycle() * 10; // Scale to percentage
+ 209   2              PWM_on_time = duty_cycle * 128 / 100;  // On-time in ticks
+ 210   2              PWM_off_time = (100 - duty_cycle) * 128 / 100; // Off-time in ticks
+ 211   2      
+ 212   2              // Read RPM and update the global display value
+ 213   2              RPM = readFanRPM(1);            // Calculate RPM from tachometer signal
+ 214   2          }
+ 215   1      }
+
+
+MODULE INFORMATION:   STATIC OVERLAYABLE
+   CODE SIZE        =    646    ----
+   CONSTANT SIZE    =   ----    ----
+   XDATA SIZE       =   ----    ----
+   PDATA SIZE       =   ----    ----
+   DATA SIZE        =     20       7
+   IDATA SIZE       =   ----    ----
+   BIT SIZE         =      1    ----
+END OF MODULE INFORMATION.
+
+
+C51 COMPILATION COMPLETE.  0 WARNING(S),  0 ERROR(S)

@@ -1,0 +1,415 @@
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                    11/28/2024  15:36:33  PAGE 1
+
+
+BL51 BANKED LINKER/LOCATER V6.22.4.0, INVOKED BY:
+C:\KEIL_V5\C51\BIN\BL51.EXE .\Objects\STARTUP.obj, .\Objects\main.obj TO .\Objects\FinalProject PRINT (.\Listings\FinalP
+>> roject.m51) RAMSIZE (256)
+
+
+MEMORY MODEL: SMALL WITH FLOATING POINT ARITHMETIC
+
+
+INPUT MODULES INCLUDED:
+  .\Objects\STARTUP.obj (?C_STARTUP)
+  .\Objects\main.obj (MAIN)
+  C:\KEIL_V5\C51\LIB\C51FPS.LIB (?C?FPMUL)
+  C:\KEIL_V5\C51\LIB\C51FPS.LIB (?C?FCAST)
+  C:\KEIL_V5\C51\LIB\C51FPS.LIB (?C?CASTF)
+  C:\KEIL_V5\C51\LIB\C51FPS.LIB (?C?FPGETOPN)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C_INIT)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C?IMUL)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C?UIDIV)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C?LMUL)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C?ULDIV)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C?SLDIV)
+  C:\KEIL_V5\C51\LIB\C51S.LIB (?C?LNEG)
+
+
+LINK MAP OF MODULE:  .\Objects\FinalProject (?C_STARTUP)
+
+
+            TYPE    BASE      LENGTH    RELOCATION   SEGMENT NAME
+            -----------------------------------------------------
+
+            * * * * * * *   D A T A   M E M O R Y   * * * * * * *
+            REG     0000H     0008H     ABSOLUTE     "REG BANK 0"
+            DATA    0008H     000FH     UNIT         ?DT?MAIN
+            DATA    0017H     000DH     UNIT         _DATA_GROUP_
+            DATA    0024H     000CH     UNIT         ?DT?READFANRPMNEW?MAIN
+            IDATA   0030H     0001H     UNIT         ?STACK
+
+            * * * * * * *   C O D E   M E M O R Y   * * * * * * *
+            CODE    0000H     0003H     ABSOLUTE     
+                    0003H     0018H                  *** GAP ***
+            CODE    001BH     0003H     ABSOLUTE     
+                    001EH     07E2H                  *** GAP ***
+            CODE    0800H     0357H     UNIT         ?C?LIB_CODE
+            CODE    0B57H     00D8H     UNIT         ?PR?READFANRPMNEW?MAIN
+            CODE    0C2FH     008CH     UNIT         ?C_C51STARTUP
+            CODE    0CBBH     007FH     UNIT         ?PR?MAIN?MAIN
+            CODE    0D3AH     006AH     UNIT         ?PR?READFANRPM?MAIN
+            CODE    0DA4H     005CH     UNIT         ?PR?_DISPLAY_NUM?MAIN
+            CODE    0E00H     0044H     UNIT         ?C?LDIV
+            CODE    0E44H     0036H     UNIT         ?PR?ON_TIME_DUTY_CYCLE?MAIN
+            CODE    0E7AH     001EH     UNIT         ?PR?TIMER1OVERFLOW?MAIN
+            CODE    0E98H     0014H     UNIT         ?C_INITSEG
+            CODE    0EACH     0013H     UNIT         ?PR?DELAY_FLICKER?MAIN
+            CODE    0EBFH     0013H     UNIT         ?PR?TIMER0_DELAY_100US?MAIN
+            CODE    0ED2H     0007H     UNIT         ?PR?_GET_RPM?MAIN
+
+
+
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  11/28/2024  15:36:33  PAGE 2
+
+
+OVERLAY MAP OF MODULE:   .\Objects\FinalProject (?C_STARTUP)
+
+
+SEGMENT                               DATA_GROUP 
+  +--> CALLED SEGMENT               START    LENGTH
+---------------------------------------------------
+?C_C51STARTUP                       -----    -----
+  +--> ?PR?MAIN?MAIN
+  +--> ?C_INITSEG
+
+?PR?MAIN?MAIN                       0017H    0008H
+  +--> ?PR?ON_TIME_DUTY_CYCLE?MAIN
+  +--> ?PR?READFANRPM?MAIN
+  +--> ?PR?_DISPLAY_NUM?MAIN
+
+?PR?READFANRPM?MAIN                 001FH    0002H
+
+?PR?_DISPLAY_NUM?MAIN               001FH    0005H
+
+
+
+SYMBOL TABLE OF MODULE:  .\Objects\FinalProject (?C_STARTUP)
+
+  VALUE           TYPE          NAME
+  ----------------------------------
+
+  -------         MODULE        ?C_STARTUP
+  C:0C2FH         SEGMENT       ?C_C51STARTUP
+  I:0030H         SEGMENT       ?STACK
+  C:0000H         PUBLIC        ?C_STARTUP
+  D:00E0H         SYMBOL        ACC
+  D:00F0H         SYMBOL        B
+  D:0083H         SYMBOL        DPH
+  D:0082H         SYMBOL        DPL
+  N:0000H         SYMBOL        IBPSTACK
+  N:0100H         SYMBOL        IBPSTACKTOP
+  N:0080H         SYMBOL        IDATALEN
+  C:0C32H         SYMBOL        IDATALOOP
+  N:0000H         SYMBOL        PBPSTACK
+  N:0100H         SYMBOL        PBPSTACKTOP
+  N:0000H         SYMBOL        PDATALEN
+  N:0000H         SYMBOL        PDATASTART
+  N:0000H         SYMBOL        PPAGE
+  N:0000H         SYMBOL        PPAGEENABLE
+  D:00A0H         SYMBOL        PPAGE_SFR
+  D:0081H         SYMBOL        SP
+  C:0C2FH         SYMBOL        STARTUP1
+  N:0000H         SYMBOL        XBPSTACK
+  N:0000H         SYMBOL        XBPSTACKTOP
+  N:0000H         SYMBOL        XDATALEN
+  N:0000H         SYMBOL        XDATASTART
+  C:0000H         LINE#         126
+  C:0C2FH         LINE#         133
+  C:0C31H         LINE#         134
+  C:0C32H         LINE#         135
+  C:0C33H         LINE#         136
+  C:0C35H         LINE#         185
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  11/28/2024  15:36:33  PAGE 3
+
+
+  C:0C38H         LINE#         196
+  -------         ENDMOD        ?C_STARTUP
+
+  -------         MODULE        MAIN
+  C:0000H         SYMBOL        _ICE_DUMMY_
+  D:0080H         PUBLIC        P0
+  D:0090H         PUBLIC        P1
+  D:00A0H         PUBLIC        P2
+  D:00B0H         PUBLIC        P3
+  B:00A8H.7       PUBLIC        EA
+  D:0008H         PUBLIC        overflowCount
+  D:000CH         PUBLIC        digits
+  C:0ED2H         PUBLIC        _get_RPM
+  B:0080H.4       PUBLIC        TACH_PIN1
+  C:0EBFH         PUBLIC        timer0_delay_100us
+  C:0D3AH         PUBLIC        readFanRPM
+  C:0CBBH         PUBLIC        main
+  C:0DA4H         PUBLIC        _display_num
+  C:0E7AH         PUBLIC        timer1Overflow
+  D:0089H         PUBLIC        TMOD
+  B:0080H.0       PUBLIC        RA0
+  B:0080H.1       PUBLIC        RA1
+  B:0080H.2       PUBLIC        RA2
+  B:00A8H.3       PUBLIC        ET1
+  B:0088H.5       PUBLIC        TF0
+  D:008CH         PUBLIC        TH0
+  D:008DH         PUBLIC        TH1
+  D:008AH         PUBLIC        TL0
+  D:008BH         PUBLIC        TL1
+  B:0088H.4       PUBLIC        TR0
+  C:0EACH         PUBLIC        delay_flicker
+  B:0088H.6       PUBLIC        TR1
+  B:0080H.4       PUBLIC        TACH_PIN
+  C:0E44H         PUBLIC        On_time_duty_cycle
+  C:0B57H         PUBLIC        readFanRPMnew
+  -------         PROC          DELAY_FLICKER
+  C:0EACH         LINE#         20
+  C:0EACH         LINE#         21
+  C:0EAFH         LINE#         22
+  C:0EB2H         LINE#         23
+  C:0EB5H         LINE#         24
+  C:0EB7H         LINE#         25
+  C:0EBAH         LINE#         26
+  C:0EBCH         LINE#         27
+  C:0EBEH         LINE#         28
+  -------         ENDPROC       DELAY_FLICKER
+  -------         PROC          _DISPLAY_NUM
+  D:001FH         SYMBOL        num
+  -------         DO            
+  D:0021H         SYMBOL        sequence
+  D:0022H         SYMBOL        holder
+  D:0023H         SYMBOL        leading_zero
+  D:0002H         SYMBOL        i
+  -------         ENDDO         
+  C:0DA4H         LINE#         32
+  C:0DA8H         LINE#         33
+  C:0DABH         LINE#         34
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  11/28/2024  15:36:33  PAGE 4
+
+
+  C:0DAEH         LINE#         35
+  C:0DB1H         LINE#         36
+  C:0DB3H         LINE#         38
+  C:0DB3H         LINE#         39
+  C:0DC0H         LINE#         41
+  C:0DCFH         LINE#         42
+  C:0DD2H         LINE#         43
+  C:0DD4H         LINE#         44
+  C:0DDCH         LINE#         45
+  C:0DDCH         LINE#         47
+  C:0DDFH         LINE#         49
+  C:0DEEH         LINE#         50
+  C:0DF4H         LINE#         51
+  C:0DFFH         LINE#         52
+  -------         ENDPROC       _DISPLAY_NUM
+  -------         PROC          TIMER0_DELAY_100US
+  C:0EBFH         LINE#         11
+  C:0EBFH         LINE#         12
+  C:0EC2H         LINE#         13
+  C:0EC5H         LINE#         14
+  C:0EC8H         LINE#         15
+  C:0ECAH         LINE#         16
+  C:0ECDH         LINE#         17
+  C:0ECFH         LINE#         18
+  C:0ED1H         LINE#         19
+  -------         ENDPROC       TIMER0_DELAY_100US
+  -------         PROC          ON_TIME_DUTY_CYCLE
+  C:0E44H         LINE#         22
+  C:0E44H         LINE#         23
+  C:0E47H         LINE#         24
+  C:0E4AH         LINE#         25
+  C:0E4FH         LINE#         26
+  C:0E52H         LINE#         27
+  C:0E52H         LINE#         28
+  C:0E55H         LINE#         29
+  C:0E55H         LINE#         30
+  C:0E55H         LINE#         31
+  C:0E5AH         LINE#         32
+  C:0E5DH         LINE#         33
+  C:0E5DH         LINE#         34
+  C:0E60H         LINE#         35
+  C:0E60H         LINE#         36
+  C:0E60H         LINE#         37
+  C:0E60H         LINE#         38
+  C:0E63H         LINE#         39
+  C:0E68H         LINE#         40
+  C:0E6BH         LINE#         41
+  C:0E6BH         LINE#         42
+  C:0E6EH         LINE#         43
+  C:0E6EH         LINE#         44
+  C:0E6EH         LINE#         45
+  C:0E71H         LINE#         46
+  C:0E76H         LINE#         47
+  C:0E76H         LINE#         48
+  C:0E79H         LINE#         49
+  C:0E79H         LINE#         50
+  C:0E79H         LINE#         51
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  11/28/2024  15:36:33  PAGE 5
+
+
+  C:0E79H         LINE#         53
+  -------         ENDPROC       ON_TIME_DUTY_CYCLE
+  -------         PROC          _GET_RPM
+  D:0006H         SYMBOL        on_time
+  C:0ED2H         LINE#         56
+  C:0ED2H         LINE#         59
+  -------         ENDPROC       _GET_RPM
+  -------         PROC          READFANRPM
+  -------         DO            
+  D:001FH         SYMBOL        timerCount1
+  D:0006H         SYMBOL        timerCount2
+  D:0004H         SYMBOL        timeDifference
+  D:0002H         SYMBOL        rpm
+  -------         ENDDO         
+  C:0D3AH         LINE#         11
+  C:0D3AH         LINE#         12
+  C:0D3FH         LINE#         13
+  C:0D41H         LINE#         14
+  C:0D43H         LINE#         15
+  C:0D45H         LINE#         18
+  C:0D48H         LINE#         19
+  C:0D4AH         LINE#         20
+  C:0D4CH         LINE#         23
+  C:0D4FH         LINE#         24
+  C:0D52H         LINE#         27
+  C:0D54H         LINE#         30
+  C:0D57H         LINE#         31
+  C:0D5AH         LINE#         34
+  C:0D5CH         LINE#         37
+  C:0D64H         LINE#         41
+  C:0D78H         LINE#         46
+  C:0D92H         LINE#         49
+  C:0D9BH         LINE#         50
+  C:0D9FH         LINE#         51
+  C:0D9FH         LINE#         53
+  C:0DA3H         LINE#         54
+  -------         ENDPROC       READFANRPM
+  -------         PROC          TIMER1OVERFLOW
+  C:0E7AH         LINE#         13
+  C:0E7EH         LINE#         14
+  C:0E93H         LINE#         15
+  -------         ENDPROC       TIMER1OVERFLOW
+  -------         PROC          READFANRPMNEW
+  -------         DO            
+  D:0024H         SYMBOL        timerCount1
+  D:0028H         SYMBOL        timerCount2
+  D:002CH         SYMBOL        timeDifference
+  D:0002H         SYMBOL        rpm
+  -------         ENDDO         
+  C:0B57H         LINE#         18
+  C:0B57H         LINE#         19
+  C:0B60H         LINE#         20
+  C:0B68H         LINE#         21
+  C:0B70H         LINE#         22
+  C:0B72H         LINE#         25
+  C:0B75H         LINE#         26
+  C:0B77H         LINE#         27
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  11/28/2024  15:36:33  PAGE 6
+
+
+  C:0B79H         LINE#         28
+  C:0B81H         LINE#         29
+  C:0B83H         LINE#         30
+  C:0B85H         LINE#         33
+  C:0B88H         LINE#         34
+  C:0B8BH         LINE#         37
+  C:0B8DH         LINE#         40
+  C:0B90H         LINE#         41
+  C:0B93H         LINE#         44
+  C:0B95H         LINE#         47
+  C:0BD4H         LINE#         50
+  C:0BF5H         LINE#         53
+  C:0C1DH         LINE#         56
+  C:0C26H         LINE#         57
+  C:0C2AH         LINE#         58
+  C:0C2AH         LINE#         60
+  C:0C2EH         LINE#         61
+  -------         ENDPROC       READFANRPMNEW
+  -------         PROC          MAIN
+  -------         DO            
+  D:0017H         SYMBOL        on_time
+  D:0019H         SYMBOL        off_time
+  D:001BH         SYMBOL        iteration
+  D:0082H         SYMBOL        RPM
+  D:001DH         SYMBOL        ON_DUTY_CYLE
+  -------         ENDDO         
+  C:0CBBH         LINE#         8
+  C:0CBBH         LINE#         9
+  C:0CC0H         LINE#         10
+  C:0CC4H         LINE#         11
+  C:0CC8H         LINE#         12
+  C:0CCCH         LINE#         13
+  C:0CD0H         LINE#         15
+  C:0CD0H         LINE#         17
+  C:0CD7H         LINE#         21
+  C:0CF0H         LINE#         22
+  C:0CF6H         LINE#         23
+  C:0D02H         LINE#         24
+  C:0D02H         LINE#         27
+  C:0D0FH         LINE#         28
+  C:0D12H         LINE#         30
+  C:0D1AH         LINE#         31
+  C:0D1AH         LINE#         33
+  C:0D27H         LINE#         34
+  C:0D2AH         LINE#         36
+  C:0D32H         LINE#         37
+  C:0D32H         LINE#         40
+  C:0D35H         LINE#         41
+  C:0D38H         LINE#         42
+  -------         ENDPROC       MAIN
+  -------         ENDMOD        MAIN
+
+  -------         MODULE        ?C?FPMUL
+  C:0800H         PUBLIC        ?C?FPMUL
+  -------         ENDMOD        ?C?FPMUL
+
+  -------         MODULE        ?C?FCAST
+BL51 BANKED LINKER/LOCATER V6.22.4.0                                                  11/28/2024  15:36:33  PAGE 7
+
+
+  C:0910H         PUBLIC        ?C?FCASTC
+  C:090BH         PUBLIC        ?C?FCASTI
+  C:0906H         PUBLIC        ?C?FCASTL
+  -------         ENDMOD        ?C?FCAST
+
+  -------         MODULE        ?C?CASTF
+  C:0944H         PUBLIC        ?C?CASTF
+  -------         ENDMOD        ?C?CASTF
+
+  -------         MODULE        ?C?IMUL
+  C:09C5H         PUBLIC        ?C?IMUL
+  -------         ENDMOD        ?C?IMUL
+
+  -------         MODULE        ?C?UIDIV
+  C:09D7H         PUBLIC        ?C?UIDIV
+  -------         ENDMOD        ?C?UIDIV
+
+  -------         MODULE        ?C?LMUL
+  C:0A2CH         PUBLIC        ?C?LMUL
+  -------         ENDMOD        ?C?LMUL
+
+  -------         MODULE        ?C?ULDIV
+  C:0AB7H         PUBLIC        ?C?ULDIV
+  -------         ENDMOD        ?C?ULDIV
+
+  -------         MODULE        ?C?SLDIV
+  C:0E00H         PUBLIC        ?C?SLDIV
+  -------         ENDMOD        ?C?SLDIV
+
+  -------         MODULE        ?C?LNEG
+  C:0B49H         PUBLIC        ?C?LNEG
+  -------         ENDMOD        ?C?LNEG
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?DELAY_FLICKER?MAIN
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?TIMER0_DELAY_100US?MAIN
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?_GET_RPM?MAIN
+
+*** WARNING L16: UNCALLED SEGMENT, IGNORED FOR OVERLAY PROCESS
+    SEGMENT: ?PR?READFANRPMNEW?MAIN
+
+******************************************************************************
+* RESTRICTED VERSION WITH 0800H BYTE CODE SIZE LIMIT; USED: 02C3H BYTE (34%) *
+******************************************************************************
+
+Program Size: data=49.0 xdata=0 code=1759
+LINK/LOCATE RUN COMPLETE.  4 WARNING(S),  0 ERROR(S)

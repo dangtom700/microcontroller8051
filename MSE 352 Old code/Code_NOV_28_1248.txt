@@ -1,0 +1,181 @@
+#include <reg51.h>
+#include <stdio.h>
+
+#define FOSC 10000000  // Oscillator frequency (10 MHz)
+#define TIMER_PRESCALER 12 // 8051 Timer runs at (FOSC / 12)
+
+unsigned char digits[] = {
+    0xC0, // HEX for 0
+    0xF9, // HEX for 1
+    0xA4, // HEX for 2
+    0xB0, // HEX for 3
+    0x99, // HEX for 4
+    0x92, // HEX for 5
+    0x82, // HEX for 6
+    0xF8, // HEX for 7
+    0x80, // HEX for 8
+    0x90, // HEX for 9
+    0xFF  // HEX for [Blank]
+};
+
+sbit TACH_PIN = P0^4;  // Tachometer signal input
+sbit RA0 = P0^0;
+sbit RA1 = P0^1;
+sbit RA2 = P0^2;
+sbit PWM_pin = P3^0;
+
+unsigned int global_display_num = 0; // Number to display on 7-segment
+unsigned char digit_index = 0;       // Current digit being displayed (0-3)
+unsigned int PWM_on_time = 0;        // On-time for PWM signal
+unsigned int PWM_off_time = 0;       // Off-time for PWM signal
+bit pwm_state = 0;                   // Current state of the PWM pin (ON/OFF)
+
+// Function to calculate RPM
+unsigned int readFanRPM(unsigned char numEdges) {
+    unsigned int timerStart = 0;
+    unsigned int timerEnd = 0;
+    unsigned int timeDifference = 0;
+    unsigned long rpm = 0; // Use 32-bit for large calculations
+    unsigned char edgeCount = 0;
+
+    // Configure Timer 1 in Mode 1 (16-bit timer)
+    TMOD = 0x10;  // Timer 1 in mode 1
+    TH1 = 0x00;   // Clear high byte
+    TL1 = 0x00;   // Clear low byte
+
+    // Ignore the first falling edge
+    while (TACH_PIN);  // Wait while pin is high
+    while (!TACH_PIN); // Wait while pin is low
+
+    // Start Timer 1
+    TR1 = 1;
+
+    // Count the next `numEdges` falling edges
+    while (edgeCount < numEdges) {
+        while (TACH_PIN);  // Wait while pin is high
+        while (!TACH_PIN); // Wait while pin is low
+        edgeCount++;
+    }
+
+    // Stop Timer 1 after counting the edges
+    TR1 = 0;
+
+    // Read Timer 1 value
+    timerEnd = (TH1 << 8) | TL1;
+
+    // Handle overflow (if end count is less than start count)
+    if (timerEnd >= timerStart) {
+        timeDifference = timerEnd - timerStart;
+    } else {
+        timeDifference = (65536 - timerStart) + timerEnd; // Account for overflow
+    }
+
+    // Convert time difference to microseconds
+    timeDifference = (timeDifference * TIMER_PRESCALER) / (FOSC / 1000000); // µs per tick
+
+    // Calculate RPM
+    if (timeDifference > 0) {
+        rpm = (60000000UL * numEdges) / (timeDifference * 2); // Factor in number of edges
+    }
+
+    return (unsigned int)rpm; // Return RPM as an unsigned int
+}
+
+// Function to determine on-time duty cycle from inputs
+int On_time_duty_cycle() {
+    if (RA0 == 1) {
+        if (RA1 == 1) {
+            if (RA2 == 1) {
+                return 100; // 111B
+            } else {
+                return 90; // 110B
+            }
+        } else {
+            if (RA2 == 1) {
+                return 80; // 101B
+            } else {
+                return 60; // 100B
+            }
+        }
+    } else {
+        if (RA1 == 1) {
+            if (RA2 == 1) {
+                return 40; // 011B
+            } else {
+                return 20; // 010B
+            }
+        } else {
+            if (RA2 == 1) {
+                return 10; // 001B
+            } else {
+                return 0; // 000B
+            }
+        }
+    }
+    return 10;
+}
+
+// Timer 0 Interrupt Service Routine for 7-segment multiplexing
+void timer0_ISR(void) interrupt 1 {
+    unsigned char digit = global_display_num % 10; // Extract the current digit
+    global_display_num /= 10;                      // Shift to the next digit for display
+
+    // Display the digit
+    P1 = digits[digit];    // Load segment data
+    P2 = 1 << digit_index; // Select the corresponding display
+    digit_index = (digit_index + 1) % 4; // Move to the next digit index
+}
+
+// Timer 1 Interrupt Service Routine for PWM
+void timer1_ISR(void) interrupt 3 {
+    if (pwm_state) {
+        // Turn off the PWM pin
+        PWM_pin = 0;
+        pwm_state = 0;
+
+        // Load off-time
+        TH1 = (65536 - (PWM_off_time * FOSC / TIMER_PRESCALER / 1000000)) >> 8;
+        TL1 = (65536 - (PWM_off_time * FOSC / TIMER_PRESCALER / 1000000)) & 0xFF;
+    } else {
+        // Turn on the PWM pin
+        PWM_pin = 1;
+        pwm_state = 1;
+
+        // Load on-time
+        TH1 = (65536 - (PWM_on_time * FOSC / TIMER_PRESCALER / 1000000)) >> 8;
+        TL1 = (65536 - (PWM_on_time * FOSC / TIMER_PRESCALER / 1000000)) & 0xFF;
+    }
+
+    TF1 = 0; // Clear the interrupt flag
+}
+
+// Main function
+void main(void) {
+    unsigned int RPM = 0;
+
+    // Configure Timer 0 for 7-segment multiplexing (1 ms interrupts)
+    TMOD |= 0x02;  // Timer 0 in mode 2 (8-bit auto-reload)
+    TH0 = 0xFA;    // Reload value for 1 ms (assuming 10 MHz clock)
+    TL0 = 0xFA;
+    ET0 = 1;       // Enable Timer 0 interrupt
+    TR0 = 1;       // Start Timer 0
+
+    // Configure Timer 1 for PWM
+    TMOD |= 0x10;  // Timer 1 in mode 1 (16-bit)
+    ET1 = 1;       // Enable Timer 1 interrupt
+    TR1 = 1;       // Start Timer 1
+
+    EA = 1;        // Enable global interrupts
+
+    while (1) {
+        // Update duty cycle based on RA0, RA1, RA2
+        unsigned int duty_cycle = On_time_duty_cycle();
+        PWM_on_time = duty_cycle * 128;   // Scale for 12.8 ms PWM period
+        PWM_off_time = (100 - duty_cycle) * 128;
+		
+
+        // Read RPM and update the global display value
+        RPM = readFanRPM(10);            // Calculate RPM from tachometer signal
+        global_display_num = RPM;        // Pass it to the display
+    }
+}
